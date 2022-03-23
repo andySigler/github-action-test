@@ -14,12 +14,12 @@ jobs:
       - name: "Check out the Git repository"
         uses: actions/checkout@v2
 
-      - name: "Write random file"
-        run: mkdir test && touch test/test.txt && echo "version-string" > test/test.txt
-
       - name: "Generate artifact name"
         id: artifact_meta
-        run: echo "::set-output name=name::some-random-artifact-name.txt"
+        run: echo "::set-output name=name::some-random-artifact-name-${{ runner.os }}"
+
+      - name: "Write random file"
+        run: mkdir test && touch test/test.txt && echo "version-string" > test/test.txt
 
       - name: "Tar artifacts to maintain permissions on POSIX"
         if: ${{ runner.os == 'linux' || runner.os == 'macos' }}
@@ -31,4 +31,4 @@ jobs:
           name: ${{ steps.artifact_meta.outputs.name }}
           path: |
             *.tar.gz
-            launcher/dist/*.exe
+            test/*.txt
