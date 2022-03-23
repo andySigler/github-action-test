@@ -1,0 +1,34 @@
+name: Continuous integration
+
+on: [push, pull_request]
+
+jobs:
+  test_github_action:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+
+    name: Build Launcher for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: "Check out the Git repository"
+        uses: actions/checkout@v2
+
+      - name: "Write random file"
+        run: mkdir test && touch test/test.txt && echo "version-string" > test/test.txt
+
+      - name: "Generate artifact name"
+        id: artifact_meta
+        run: echo "some-random-artifact-name.txt"
+
+      - name: "Tar artifacts to maintain permissions on POSIX"
+        if: ${{ runner.os == 'linux' || runner.os == 'macos' }}
+        run: tar -C test -cvzf ${{ steps.artifact_meta.outputs.name }}.tar.gz .
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.artifact_meta.outputs.name }}
+          path: |
+            *.tar.gz
+            launcher/dist/*.exe
