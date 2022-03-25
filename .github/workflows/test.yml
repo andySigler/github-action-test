@@ -3,12 +3,9 @@ name: Test Inputs
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        type: environment
-        description: Select the environment
-      boolean:
-        type: boolean
-        description: True or False
+      string:
+        type: string
+        description: Version number
       choice:
         type: choice
         description: Make a choice
@@ -25,6 +22,5 @@ jobs:
 
       - name: greet
         run: | 
-          echo "environment is ${{ github.event.inputs.environment }}"
-          echo "boolean is ${{ github.event.inputs.boolean }}"
+          echo "string is ${{ github.event.inputs.string }}"
           echo "choice is ${{ github.event.inputs.choice }}"
