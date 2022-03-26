@@ -1,0 +1,27 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      string:
+        type: string
+        description: Full Version
+      choice:
+        type: choice
+        description: Module
+        options:
+        - Temp-Deck
+        - Mag-Deck
+        - Thermocycler
+        - Heater-Shaker
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Test our inputs
+        run: | 
+          echo "string is ${{ github.event.inputs.string }}"
+          echo "choice is ${{ github.event.inputs.choice }}"
