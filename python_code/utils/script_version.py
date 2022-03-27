@@ -1,0 +1,48 @@
+import __main__
+import os
+import sys
+
+import git
+
+
+VERSION_FILE_NAME = '.version'
+DEFAULT_HASH_LENGTH = 7
+
+
+def is_frozen():
+    _frozen = getattr(sys, 'frozen', False)
+    if not _frozen and not __file__:
+        raise RuntimeError('Unexpected state: not frozen nor __file__')
+    return _frozen
+
+
+def get_git_commit_hash(length=DEFAULT_HASH_LENGTH):
+    _repo = git.Repo(search_parent_directories=True)
+    _sha = _repo.head.commit.hexsha
+    return _repo.git.rev_parse(_sha, short=length)
+
+
+def read_script_version():
+    is_pyinstaller = is_frozen()
+    if is_pyinstaller:
+        version_dir = sys._MEIPASS
+    else:
+        # version file is stored next to the Python script being invoked
+        version_dir = os.path.dirname(__main__.__file__)
+    version_filepath = os.path.join(version_dir, VERSION_FILE_NAME)
+    if not os.path.exists(version_filepath):
+        raise RuntimeError(
+            f'Unable to find version file at path: \"{version_filepath}\"')
+    with open(version_filepath, 'r') as f:
+        lines = f.readlines()
+        if not len(lines):
+            raise RuntimeError(
+                f'No version found in \"{version_filepath}\"')
+        version = lines[0].strip()
+    if not version:
+        raise RuntimeError(
+            f'No version found in \"{version_filepath}\"')
+    if not is_pyinstaller:
+        # Python script automatically appends the commit hash to version
+        version += f'-PY-{get_git_commit_hash()}'
+    return version
