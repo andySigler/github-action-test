@@ -1,5 +1,7 @@
 import argparse
 import os
+import platform
+import shutil
 
 import git
 from PyInstaller.__main__ import run as build_exe
@@ -7,7 +9,8 @@ from PyInstaller.__main__ import run as build_exe
 from .script_version import VERSION_FILE_NAME, read_version_file, get_git_commit_hash, DEFAULT_HASH_LENGTH
 
 
-SCRIPT_FILE_NAME = '__main__.py'  # all test scripts are named __main__.py
+RELATIVE_SCRIPTS_DIR = '../scripts'
+TEMP_PY_NAME = 'tmp.py'  # the actual script PyInstaller builds
 
 
 def generate_version_tag(name, version):
@@ -15,7 +18,7 @@ def generate_version_tag(name, version):
 
 
 def add_commit_to_version_name(name, hash):
-    return name + hash[:DEFAULT_HASH_LENGTH]
+    return name + '_' + hash[:DEFAULT_HASH_LENGTH]
 
 
 def search_for_subfolder_by_name(parent_dir, subfolder_name):
@@ -44,31 +47,30 @@ def is_commit_a_release(repo, expected_tag_name, commit_hash):
     return False
 
 
+def fix_path_for_windows(path):
+    if platform.system() == 'Windows':
+        return path.replace('\\', '\\\\')
+    return path
+
+
+def convert_dir_to_py_import(exclude, path):
+    module_path = [os.path.basename(path)]
+    while len(module_path) < 10:
+        path = os.path.split(path)[0]
+        dir_name = os.path.basename(path)
+        if dir_name == exclude:
+            module_path.reverse()
+            return '.'.join(module_path)
+        module_path.append(os.path.basename(path))
+    raise ValueError(
+        f'Unable to find parent directory ({exclude}) within script path ({path})')
+
 if __name__ == '__main__':
-    '''
-    FILE_NAME="$1"
-    SCRIPT_DIR="$THIS_DIR/python_test/tests/$FILE_NAME"
-
-    # TODO: generate temporary .version file containing git hash
-
-    SCRIPT_PATH="$SCRIPT_DIR/__main__.py"
-    VERSION_FILE_NAME="$SCRIPT_DIR/.version"
-
-    # TODO: append .version to the executable's file name
-
-    BUILD_PATH="$THIS_DIR/build"
-    OUTPUT_PATH="$BUILD_PATH/$FILE_NAME"
-
-    # erase previous build folder
-    rm -rf "$BUILD_PATH" || true
-    # build
-    pyinstaller "$SCRIPT_PATH" --clean --onefile --name "$OUTPUT_PATH" --distpath "$THIS_DIR" -y --add-data "$VERSION_FILE_NAME:."
-    '''
     parser = argparse.ArgumentParser("Script Build")
     parser.add_argument(
         "-n",
         "--name",
-        help="Script name",
+        help="Subfolder name containing the target script to build (__main__.py)",
         default="",
         type=str,
     )
@@ -79,27 +81,57 @@ if __name__ == '__main__':
         default="./build",
         type=str,
     )
-    # parser.add_argument('-r', '--release', action='store_true')
     args = parser.parse_args()
-    scripts_dir = os.path.join(os.path.dirname(__file__), '../scripts')
+
+    # find the directory containing our target script (args.name)
+    scripts_dir = os.path.join(os.path.dirname(__file__), RELATIVE_SCRIPTS_DIR)
     matching_dirs = search_for_subfolder_by_name(scripts_dir, args.name)
     if not len(matching_dirs):
         raise ValueError(f'No script subfolders found named \"{args.name}\"')
     if len(matching_dirs) > 1:
         # TODO: maybe make a list to pick which one to build?
         raise ValueError(f'Multiple script subfolders found named \"{args.name}\": {matching_dirs}')
-    script_file_path = os.path.join(matching_dirs[0], SCRIPT_FILE_NAME)
     version_file_path = os.path.join(matching_dirs[0], VERSION_FILE_NAME)
+
+    # read .version file, create a name_version string
     version = read_version_file(version_file_path)
     version_with_name = generate_version_tag(args.name, version)
+
+    # check if this current commit is a release or not (is a release if it was tagged)
     repo = git.Repo(search_parent_directories=True)
     commit_hash = get_git_commit_hash(repo, length=40)
     is_release = is_commit_a_release(repo, version_with_name, commit_hash)
     if is_release:
-        version_to_use = version_with_name
+        version_to_use = str(version_with_name)
     else:
+        # if NOT a release, then append the commit hash to the version string
         version_to_use = add_commit_to_version_name(version_with_name, commit_hash)
-    print(version_to_use)
-    # TODO: check if we are a release (version == tag.name && commit == tag.commit)
-    # TODO: generate temporary .version file (using git-hash)
-    # TODO: build PyInstaller executable
+
+    # generate temporary .version and main.py files
+    build_dir = os.path.abspath('./build')
+    tmp_version_file_path = os.path.join(build_dir, VERSION_FILE_NAME)
+    tmp_py_file_path = os.path.join(build_dir, TEMP_PY_NAME)
+    if os.path.exists(build_dir):
+        shutil.rmtree(build_dir)
+    os.mkdir(build_dir)
+    with open(tmp_version_file_path, 'w') as f:
+        f.write(version_to_use)
+    repo_name = repo.remotes.origin.url.split('.git')[0].split('/')[-1]
+    import_py_line = convert_dir_to_py_import(repo_name, matching_dirs[0])
+    with open(tmp_py_file_path, 'w') as f:
+        f.write(f'from {import_py_line} import main; main()')
+    embedded_data_path = fix_path_for_windows(tmp_version_file_path)
+    if platform.system() == 'Windows':
+        embedded_data_path += ';.'
+    else:
+        embedded_data_path += ':.'
+
+    # build PyInstaller executable, using temporary files
+    pyinstaller_args = [
+        fix_path_for_windows(tmp_py_file_path), '--clean', '--onefile',
+        '--name', version_to_use, '--distpath', fix_path_for_windows(build_dir), '-y',
+        '--add-data', embedded_data_path
+    ]
+    with open(os.path.join(build_dir, 'pyinstaller.sh'), 'w') as f:
+        f.write('pyinstaller ' + ' '.join(pyinstaller_args))
+    build_exe(pyinstaller_args)

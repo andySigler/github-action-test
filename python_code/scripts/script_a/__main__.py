@@ -1,7 +1,4 @@
-from ...utils.script_version import read_script_version
-from ...drivers.example_driver import example_driver_method
-
+from . import main
 
 if __name__ == '__main__':
-    print(generate_script_version())
-    print(example_driver_method())
+    main()
