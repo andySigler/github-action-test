@@ -1,7 +1,39 @@
 import argparse
+import os
 
 import git
 from PyInstaller.__main__ import run as build_exe
+
+from .script_version import VERSION_FILE_NAME, read_version_file, get_git_commit_hash
+
+
+SCRIPT_FILE_NAME = '__main__.py'  # all test scripts are named __main__.py
+
+
+def search_for_subfolder_by_name(parent_dir, subfolder_name):
+    matching_dirs = []
+    for d in os.listdir(parent_dir):
+        abs_path = os.path.abspath(os.path.join(parent_dir, d))
+        if os.path.isdir(abs_path):
+            if d == subfolder_name:
+                matching_dirs.append(abs_path)
+            matching_dirs += search_for_subfolder_by_name(abs_path, subfolder_name)
+    return matching_dirs
+
+
+def is_commit_a_release(repo, expected_tag_name, commit_hash):
+    for tag in repo.tags:
+        same_hash = (str(tag.commit) == commit_hash)
+        same_version = (expected_tag_name == str(tag))
+        if same_hash and same_version:
+            return True
+        elif same_hash:
+            raise ValueError(
+                f'Expected tag name ({expected_tag_name}) does not match tag at this commit: {str(tag)}')
+        elif same_version:
+            # NOTE: this is expected during development, because version numbers only change with new releases
+            continue
+    return False
 
 
 if __name__ == '__main__':
@@ -41,7 +73,21 @@ if __name__ == '__main__':
     )
     # parser.add_argument('-r', '--release', action='store_true')
     args = parser.parse_args()
-    # TODO: find test based on --name (might be multiple)
-    # TODO: read .version, and check if we are a release
+    scripts_dir = os.path.join(os.path.dirname(__file__), '../scripts')
+    matching_dirs = search_for_subfolder_by_name(scripts_dir, args.name)
+    if not len(matching_dirs):
+        raise ValueError(f'No script subfolders found named \"{args.name}\"')
+    if len(matching_dirs) > 1:
+        # TODO: maybe make a list to pick which one to build?
+        raise ValueError(f'Multiple script subfolders found named \"{args.name}\": {matching_dirs}')
+    script_file_path = os.path.join(matching_dirs[0], SCRIPT_FILE_NAME)
+    version_file_path = os.path.join(matching_dirs[0], VERSION_FILE_NAME)
+    version = read_version_file(version_file_path)
+    repo = git.Repo(search_parent_directories=True)
+    commit_hash = get_git_commit_hash(repo, length=40)
+    expected_tag_name = args.name + '_' + version
+    is_release = is_commit_a_release(repo, expected_tag_name, commit_hash)
+    print(is_release)
+    # TODO: check if we are a release (version == tag.name && commit == tag.commit)
     # TODO: generate temporary .version file (using git-hash)
     # TODO: build PyInstaller executable
