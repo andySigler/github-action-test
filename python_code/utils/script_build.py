@@ -4,10 +4,18 @@ import os
 import git
 from PyInstaller.__main__ import run as build_exe
 
-from .script_version import VERSION_FILE_NAME, read_version_file, get_git_commit_hash
+from .script_version import VERSION_FILE_NAME, read_version_file, get_git_commit_hash, DEFAULT_HASH_LENGTH
 
 
 SCRIPT_FILE_NAME = '__main__.py'  # all test scripts are named __main__.py
+
+
+def generate_version_tag(name, version):
+    return name + '_' + version
+
+
+def add_commit_to_version_name(name, hash):
+    return name + hash[:DEFAULT_HASH_LENGTH]
 
 
 def search_for_subfolder_by_name(parent_dir, subfolder_name):
@@ -83,11 +91,15 @@ if __name__ == '__main__':
     script_file_path = os.path.join(matching_dirs[0], SCRIPT_FILE_NAME)
     version_file_path = os.path.join(matching_dirs[0], VERSION_FILE_NAME)
     version = read_version_file(version_file_path)
+    version_with_name = generate_version_tag(args.name, version)
     repo = git.Repo(search_parent_directories=True)
     commit_hash = get_git_commit_hash(repo, length=40)
-    expected_tag_name = args.name + '_' + version
-    is_release = is_commit_a_release(repo, expected_tag_name, commit_hash)
-    print(is_release)
+    is_release = is_commit_a_release(repo, version_with_name, commit_hash)
+    if is_release:
+        version_to_use = version_with_name
+    else:
+        version_to_use = add_commit_to_version_name(version_with_name, commit_hash)
+    print(version_to_use)
     # TODO: check if we are a release (version == tag.name && commit == tag.commit)
     # TODO: generate temporary .version file (using git-hash)
     # TODO: build PyInstaller executable
