@@ -5,6 +5,7 @@ import time
 #       this would prevent us from being able to "freeze" into an EXE
 from ...utils.version import generate_script_version
 from ...drivers.example_driver import example_driver_method
+from .helper import helper_method
 
 
 # all test scripts require a main() method
@@ -14,4 +15,5 @@ def main():
     print('Script version:', generate_script_version(__file__))
     while True:
         time.sleep(1)
+        print(helper_method())
         print(example_driver_method())
