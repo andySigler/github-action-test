@@ -22,11 +22,9 @@ python -m virtualenv venv
 ./venv/Scripts/activate.bat
 ```
 
-### 3) Install Python requirements:
+### 3) Install Python package:
 ```commandline
-cd python-code
-python setup.py develop
-cd ..
+python -m pip install -e ./python_code --no-binary :all:
 ```
 
 ## Developing

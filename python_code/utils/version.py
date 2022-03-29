@@ -22,6 +22,10 @@ def get_git_commit_hash(repo=None, length=DEFAULT_HASH_LENGTH):
     return repo.git.rev_parse(_sha, short=length)
 
 
+def add_commit_hash_to_version(version, repo=None, length=DEFAULT_HASH_LENGTH):
+    return f'{version}-{get_git_commit_hash(repo=repo, length=length)}'
+
+
 def read_version_file(version_filepath) -> str:
     if not os.path.exists(version_filepath):
         raise RuntimeError(
@@ -49,5 +53,5 @@ def generate_script_version(file) -> str:
     version = read_version_file(version_filepath=version_filepath)
     if not is_pyinstaller:
         # Python script automatically appends the commit hash to version
-        version += f'-PY-{get_git_commit_hash()}'
+        version = add_commit_hash_to_version(version)
     return version
