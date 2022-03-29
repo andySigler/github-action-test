@@ -64,6 +64,23 @@ def convert_dir_to_py_import(exclude, path):
         f'Unable to find parent directory ({exclude}) within script path ({path})')
 
 
+def find_version_file_path(name):
+    scripts_dir = os.path.join(os.path.dirname(__file__), RELATIVE_SCRIPTS_DIR)
+    matching_dirs = search_for_subfolder_by_name(scripts_dir, name)
+    if not len(matching_dirs):
+        raise ValueError(f'No script subfolders found named \"{args.name}\"')
+    if len(matching_dirs) > 1:
+        # TODO: maybe make a list to pick which one to build?
+        raise ValueError(f'Multiple script subfolders found named \"{args.name}\": {matching_dirs}')
+    return os.path.join(matching_dirs[0], VERSION_FILE_NAME)
+
+
+def generate_tag_name_for_script(name):
+    # this method is used while tagging releases (GithubAction)
+    return generate_version_tag(name, read_version_file(find_version_file_path(name)))
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Script Build")
     parser.add_argument(
@@ -82,17 +99,8 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    # find the directory containing our target script (args.name)
-    scripts_dir = os.path.join(os.path.dirname(__file__), RELATIVE_SCRIPTS_DIR)
-    matching_dirs = search_for_subfolder_by_name(scripts_dir, args.name)
-    if not len(matching_dirs):
-        raise ValueError(f'No script subfolders found named \"{args.name}\"')
-    if len(matching_dirs) > 1:
-        # TODO: maybe make a list to pick which one to build?
-        raise ValueError(f'Multiple script subfolders found named \"{args.name}\": {matching_dirs}')
-    version_file_path = os.path.join(matching_dirs[0], VERSION_FILE_NAME)
-
     # read .version file
+    version_file_path = find_version_file_path(args.name)
     version = read_version_file(version_file_path)
 
     # check if this current commit is a release or not (is a release if it was tagged)
@@ -113,7 +121,7 @@ if __name__ == '__main__':
     with open(tmp_version_file_path, 'w') as f:
         f.write(version)
     repo_name = repo.remotes.origin.url.split('.git')[0].split('/')[-1]
-    import_py_line = convert_dir_to_py_import(repo_name, matching_dirs[0])
+    import_py_line = convert_dir_to_py_import(repo_name, os.path.dirname(version_file_path))
     with open(tmp_py_file_path, 'w') as f:
         f.write(f'from {import_py_line} import main; main()')
     embedded_data_path = fix_path_for_windows(tmp_version_file_path)
