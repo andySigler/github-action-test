@@ -115,7 +115,6 @@ if __name__ == '__main__':
     repo_name = repo.remotes.origin.url.split('.git')[0].split('/')[-1]
     import_py_line = convert_dir_to_py_import(repo_name, matching_dirs[0])
     with open(tmp_py_file_path, 'w') as f:
-        # f.write('import time\r\nwhile True:\r\n\tprint(\"hello\")\r\n\ttime.sleep(1)')
         f.write(f'from {import_py_line} import main; main()')
     embedded_data_path = fix_path_for_windows(tmp_version_file_path)
     if platform.system() == 'Windows':
@@ -135,4 +134,5 @@ if __name__ == '__main__':
     with open(os.path.join(build_dir, f'build_{build_name}.sh'), 'w') as f:
         f.write('pyinstaller ' + ' '.join(pyinstaller_args))
     build_exe(pyinstaller_args)
-    print('DONE')
+    os.rename(tmp_py_file_path, os.path.join(build_dir, TEMP_PY_NAME))
+    print(f'\nDone building {build_name}')

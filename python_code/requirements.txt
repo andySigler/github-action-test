@@ -1,4 +1,4 @@
 # requirements.txt
 #
 # installs dependencies from ./setup.py, and the package itself
-.
+-e .
