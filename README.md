@@ -1,30 +1,11 @@
 # github-action-test
 
-## Installation
+## Installing
 
-### 1) Clone repository:
 ```commandline
 git clone https://github.com/andySigler/github-action-test.git
 cd github-action-test
-```
-
-### 2) **Optional**: Create a virtual Python environment:
-
-on macOS:
-```commandline
-python -m virtualenv venv
-source venv/bin/activate
-```
-
-on Windows:
-```commandline
-python -m virtualenv venv
-./venv/Scripts/activate.bat
-```
-
-### 3) Install Python package:
-```commandline
-python -m pip install -e ./python_code --no-binary :all:
+python -m pip install -r requirements.txt
 ```
 
 ## Developing
