@@ -45,9 +45,9 @@ def is_commit_a_release(repo, expected_tag_name, commit_hash):
     return False
 
 
-def fix_path_for_windows(path):
+def fix_path_for_pyinstaller(path):
     if platform.system() == 'Windows':
-        return path.replace('\\', '\\\\')
+        path = path.replace('\\', '\\\\')
     return path
 
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     import_py_line = convert_dir_to_py_import(repo_name, os.path.dirname(version_file_path))
     with open(tmp_py_file_path, 'w') as f:
         f.write(f'from {import_py_line} import main; main()')
-    embedded_data_path = fix_path_for_windows(tmp_version_file_path)
+    embedded_data_path = fix_path_for_pyinstaller(tmp_version_file_path)
     if platform.system() == 'Windows':
         embedded_data_path += ';.'
     else:
@@ -133,10 +133,9 @@ if __name__ == '__main__':
     # build PyInstaller executable, using temporary files
     build_name = generate_version_tag(args.name, version)
     pyinstaller_args = [
-        fix_path_for_windows(tmp_py_file_path),
+        fix_path_for_pyinstaller(tmp_py_file_path),
         '--clean', '--onefile', '-y',
-        '--name', build_name,
-        '--distpath', fix_path_for_windows(build_dir),
+        '--name', build_name.replace('.', '-'),
         '--add-data', embedded_data_path
     ]
     with open(os.path.join(build_dir, f'build_{build_name}.sh'), 'w') as f:
