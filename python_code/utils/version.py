@@ -1,4 +1,3 @@
-import __main__
 import os
 import sys
 
@@ -39,13 +38,13 @@ def read_version_file(version_filepath) -> str:
     return version
 
 
-def generate_script_version() -> str:
+def generate_script_version(file) -> str:
     is_pyinstaller = is_frozen()
     if is_pyinstaller:
         version_dir = sys._MEIPASS
     else:
         # version file is stored next to the Python script being invoked
-        version_dir = os.path.dirname(__main__.__file__)
+        version_dir = os.path.dirname(file)
     version_filepath = os.path.join(version_dir, VERSION_FILE_NAME)
     version = read_version_file(version_filepath=version_filepath)
     if not is_pyinstaller:

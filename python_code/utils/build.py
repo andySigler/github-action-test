@@ -6,7 +6,8 @@ import shutil
 import git
 from PyInstaller.__main__ import run as build_exe
 
-from .script_version import VERSION_FILE_NAME, read_version_file, get_git_commit_hash, DEFAULT_HASH_LENGTH
+from .version import read_version_file, get_git_commit_hash
+from .version import VERSION_FILE_NAME, DEFAULT_HASH_LENGTH
 
 
 RELATIVE_SCRIPTS_DIR = '../scripts'
