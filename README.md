@@ -2,25 +2,29 @@
 
 ## Installing
 
+1) Clone the repo
+2) `cd` into repo directory
+3) Install the `github_action_test` Python package, in editable (`-e`) mode
+
 ```commandline
 git clone https://github.com/andySigler/github-action-test.git
 cd github-action-test
-python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 ## Developing
 
-`python_code` is a Python module, and can be invoked from command line using the following syntax:
+`github_action_test` is a Python module, and can be invoked from command line using the following syntax:
 
 ```commandline
-python -m python_code.scripts.script_a
+python -m github_action_test.scripts.script_a
 ```
 
 This works because the submodule `script_a` is organized like this:
 
 ```
 github-action-test
-    -> python_code
+    -> github_action_test
         -> scripts
             -> script_a
                 -> __init__.py

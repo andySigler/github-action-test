@@ -11,8 +11,9 @@ from .version import VERSION_FILE_NAME
 
 
 RELATIVE_BUILD_DIR = './build'
-RELATIVE_SCRIPTS_DIR = '../scripts'
+RELATIVE_SCRIPTS_DIR = '../production_tests'
 TEMP_PY_NAME = 'tmp.py'  # the actual script PyInstaller builds
+MAIN_PY_NAME = 'main.py'
 
 
 def generate_version_tag(name, version):
@@ -103,6 +104,9 @@ if __name__ == '__main__':
     version_file_path = find_version_file_path(args.name)
     version = read_version_file(version_file_path)
 
+    # get the main script path
+    main_file_path = os.path.join(os.path.dirname(version_file_path), MAIN_PY_NAME)
+
     # check if this current commit is a release or not (is a release if it was tagged)
     repo = git.Repo(search_parent_directories=True)
     expected_tag_name = generate_version_tag(args.name, version)
@@ -111,19 +115,14 @@ if __name__ == '__main__':
     if not is_release:
         version = add_commit_hash_to_version(version)
 
-    # generate temporary .version and .py files
+    # generate temporary .version
     build_dir = os.path.abspath(args.out_dir)
     tmp_version_file_path = os.path.join(build_dir, VERSION_FILE_NAME)
-    tmp_py_file_path = os.path.join(os.path.abspath('.'), TEMP_PY_NAME)
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
     os.mkdir(build_dir)
     with open(tmp_version_file_path, 'w') as f:
         f.write(version)
-    repo_name = repo.remotes.origin.url.split('.git')[0].split('/')[-1]
-    import_py_line = convert_dir_to_py_import(repo_name, os.path.dirname(version_file_path))
-    with open(tmp_py_file_path, 'w') as f:
-        f.write(f'from {import_py_line} import main; main()')
     embedded_data_path = fix_path_for_pyinstaller(tmp_version_file_path)
     if platform.system() == 'Windows':
         embedded_data_path += ';.'
@@ -133,7 +132,7 @@ if __name__ == '__main__':
     # build PyInstaller executable, using temporary files
     build_name = generate_version_tag(args.name, version)
     pyinstaller_args = [
-        fix_path_for_pyinstaller(tmp_py_file_path),
+        fix_path_for_pyinstaller(main_file_path),
         '--clean', '--onefile', '-y',
         '--name', build_name.replace('.', '-'),
         '--add-data', embedded_data_path
@@ -141,5 +140,4 @@ if __name__ == '__main__':
     with open(os.path.join(build_dir, f'build_{build_name}.sh'), 'w') as f:
         f.write('pyinstaller ' + ' '.join(pyinstaller_args))
     build_exe(pyinstaller_args)
-    os.rename(tmp_py_file_path, os.path.join(build_dir, TEMP_PY_NAME))
     print(f'\nDone building {build_name}')
