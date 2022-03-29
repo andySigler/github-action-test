@@ -140,4 +140,8 @@ if __name__ == '__main__':
     with open(os.path.join(build_dir, f'build_{build_name}.sh'), 'w') as f:
         f.write('pyinstaller ' + ' '.join(pyinstaller_args))
     build_exe(pyinstaller_args)
+    # move the spec file to the ./build dir
+    for f in os.listdir('.'):
+        if os.path.isfile(f) and f.split('.')[-1] == 'spec':
+            os.rename(f, os.path.join(build_dir, f))
     print(f'\nDone building {build_name}')

@@ -25,38 +25,12 @@ This works because the submodule `script_a` is organized like this:
 ```
 github-action-test
     -> github_action_test
-        -> scripts
+        -> production_tests
             -> script_a
-                -> __init__.py
-                -> __main__.py
                 -> .version
+                -> main.py
+                -> whatever_script_you_want.py
 ```
-
-### __init__.py
-
-This is the entry point for the `script_a` submodule, and must define a `main()` method:
-
-```python
-# __init___.py
-
-def main():
-    # code goes here
-```
-
-### __main__.py
-
-This is the actual file that is called when running as submodule, using `python -m ...`
-
-Every `__main__.py` file can simply contain the following few lines:
-```python
-# __main__.py
-from . import main
-
-if __name__ == '__main__':
-    main()
-```
-
-This imports the `main()` method from `__init__.py`, and runs it.
 
 ### .version
 
@@ -69,6 +43,17 @@ A1.3
 ```
 
 This file is read and used to create a unique version string for the script (and built executable).
+
+### main.py
+
+This is the entry point for the `script_a` submodule. It is required to be named `main.py`, for use during PyInstaller builds:
+
+```python
+# main.py
+
+if __name__ == '__main__':
+    # code goes here
+```
 
 ## Release
 
