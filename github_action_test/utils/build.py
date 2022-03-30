@@ -45,6 +45,13 @@ def is_commit_a_release(repo, expected_tag_name, commit_hash):
     return False
 
 
+def is_tag_already_made(repo, tag_name):
+    for tag in repo.tags:
+        if tag_name == str(tag):
+            return True
+    return False
+
+
 def fix_path_for_pyinstaller(path):
     if platform.system() == 'Windows':
         path = path.replace('\\', '\\\\')
@@ -77,7 +84,10 @@ def find_version_file_path(name):
 
 def generate_tag_name_for_script(name):
     # this method is used while tagging releases (GithubAction)
-    return generate_version_tag(name, read_version_file(find_version_file_path(name)))
+    tag_name = generate_version_tag(name, read_version_file(find_version_file_path(name)))
+    repo = git.Repo(search_parent_directories=True)
+    if is_tag_already_made(repo, tag_name):
+        raise ValueError(f'Tag with name \"{tag_name}\" already exists')
 
 
 
