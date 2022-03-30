@@ -52,7 +52,7 @@ jobs:
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.get_tag_name.outputs.name }}
+          name: ${{ steps.get_artifact_name.outputs.name }}
           path: |
             *.tar.gz
             dist/*.exe
