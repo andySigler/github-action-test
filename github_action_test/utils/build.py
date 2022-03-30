@@ -80,7 +80,7 @@ def generate_tag_name_for_script(name):
     return generate_version_tag(name, read_version_file(find_version_file_path(name)))
 
 
-def generate_exe_name_for_script(name):
+def read_version_and_maybe_add_commit_hash(name):
     repo = git.Repo(search_parent_directories=True)
     _v = read_version_file(find_version_file_path(name))
     expected_exe_name = generate_version_tag(name, _v)
@@ -91,6 +91,10 @@ def generate_exe_name_for_script(name):
         return add_commit_hash_to_version(_v)
     else:
         return _v
+
+
+def generate_exe_name_for_script(name):
+    return generate_version_tag(name, read_version_and_maybe_add_commit_hash(name))
 
 
 if __name__ == '__main__':
@@ -113,7 +117,7 @@ if __name__ == '__main__':
 
     # read .version file
     version_file_path = find_version_file_path(args.name)
-    version = generate_exe_name_for_script(args.name)
+    version = read_version_and_maybe_add_commit_hash(args.name)
 
     # get the main script path
     main_file_path = os.path.join(os.path.dirname(version_file_path), MAIN_PY_NAME)
