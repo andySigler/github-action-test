@@ -3,11 +3,9 @@ name: Tag and Build
 on:
   workflow_dispatch:
     inputs:
-      choice:
-        type: choice
-        description: Production Test Name
-        options:
-        - script_a
+      string:
+        type: string
+        description: Test Name
 jobs:
   tag_and_build:
     strategy:
@@ -29,7 +27,7 @@ jobs:
 
       - name: "Read name from user input"
         id: get_test_name
-        run: echo "::set-output name=name::${{ github.event.inputs.choice }}"
+        run: echo "::set-output name=name::${{ github.event.inputs.string }}"
 
       - name: "Generate tag name"
         id: get_tag_name
@@ -39,7 +37,7 @@ jobs:
         run: git tag ${{ steps.get_tag_name.outputs.name }} && git push --tags
 
       - name: "Build executable"
-        run: python -m github_action_test.utils.build --name ${{ github.event.inputs.choice }}
+        run: python -m github_action_test.utils.build --name ${{ github.event.inputs.string }}
 
       - name: "Tar artifacts to maintain permissions on POSIX"
         if: ${{ runner.os == 'linux' || runner.os == 'macos' }}
