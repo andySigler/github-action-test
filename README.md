@@ -14,13 +14,33 @@ python -m pip install -e .
 
 ## Developing
 
-`github_action_test` is a Python module, and can be invoked from command line using the following syntax:
+`github_action_test` is a Python module:
 
-```commandline
-python -m github_action_test.scripts.script_a
+```python
+from github_action_test.utils import version
+
+print(version.generate_script_version(__file__))
 ```
 
-This works because the submodule `script_a` is organized like this:
+but also it's contained scripts can be ran from the command line:
+
+```commandline
+python github_action_test/production_test/script_a/main.py
+```
+
+### Miscellaneous Scripts
+
+Scripts and sub-projects stored in `misc_scripts` can be organized however is useful. They can import from other parts of the `github_action_test` module, or use their own self contained modules and helpers.
+
+Scripts here can be ran as normal:
+
+```commandline
+python github_action_test/misc_scripts/random_script/main.py
+```
+
+### Production Tests
+
+Production tests are each given their own subfolder (for example, `script_a`). This production test subfolder requires a `.version` and `main.py` file:
 
 ```
 github-action-test
@@ -29,10 +49,10 @@ github-action-test
             -> script_a
                 -> .version
                 -> main.py
-                -> whatever_script_you_want.py
+                -> helper.py
 ```
 
-### .version
+#### .version
 
 This is a text file containing the current tagged version of this script.
 
@@ -44,18 +64,32 @@ A1.3
 
 This file is read and used to create a unique version string for the script (and built executable).
 
-### main.py
+#### main.py
 
 This is the entry point for the `script_a` submodule. It is required to be named `main.py`, for use during PyInstaller builds:
 
 ```python
 # main.py
+from github_action_test.utils import version
 
 if __name__ == '__main__':
     # code goes here
+    print(version.generate_script_version(__file__))
 ```
 
+#### Other Files
+
+Other required files (like `helpers.py` in the example above) can also be included within a production test. These should be files/scripts that are only useful for this one test, and not used elsewhere in the `github_action_test` package.
+
 ## Release
+
+Production releases are made on a per-test basis. For example, if the `script_a` test is ready for a release, we would create a release for just that one script call `script_a_<version>`, where `<version>` would be defined within the `.version` file.
+
+The release process then includes the following:
+1) Update that test's `.version` file, within its own separate pull-request
+2) Use Github workflow to create a tag for the repository, naming the tag `<SCRIPT-NAME>_<SCRIPT-VERSION>`
+3) Github workflow then builds (using `pyinstaller`) an executable for that script
+4) Edit the tag on Github to publish it as a release, and attach the build artifacts as assets
 
 ### Versioning
 
