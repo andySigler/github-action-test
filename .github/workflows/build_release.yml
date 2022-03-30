@@ -10,8 +10,11 @@ on:
         - script_a
 jobs:
   build:
-    runs-on: macos-10.15
-
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04, windows-2019, macos-10.15 ]
+    name: Build Launcher for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: "Check out the Git repository"
         uses: actions/checkout@v2
@@ -41,6 +44,10 @@ jobs:
       - name: "Tar artifacts to maintain permissions on POSIX"
         if: ${{ runner.os == 'linux' || runner.os == 'macos' }}
         run: tar -C dist -cvzf ${{ steps.get_tag_name.outputs.name }}.tar.gz .
+
+      - name: "Read name from user input"
+        id: get_artifact_name
+        run: echo "::set-output name=name::${{ steps.get_tag_name.outputs.name }}-${{ runner.os }}"
 
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v2
