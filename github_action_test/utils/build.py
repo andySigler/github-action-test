@@ -80,6 +80,19 @@ def generate_tag_name_for_script(name):
     return generate_version_tag(name, read_version_file(find_version_file_path(name)))
 
 
+def generate_exe_name_for_script(name):
+    repo = git.Repo(search_parent_directories=True)
+    _v = read_version_file(find_version_file_path(name))
+    expected_exe_name = generate_version_tag(name, _v)
+    is_release = is_commit_a_release(
+        repo, expected_exe_name, get_git_commit_hash(repo, length=40))
+    if not is_release:
+        # non-releases get the commit hash added to their version
+        return add_commit_hash_to_version(_v)
+    else:
+        return _v
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Script Build")
     parser.add_argument(
@@ -100,7 +113,7 @@ if __name__ == '__main__':
 
     # read .version file
     version_file_path = find_version_file_path(args.name)
-    version = read_version_file(version_file_path)
+    version = generate_exe_name_for_script(args.name)
 
     # get the main script path
     main_file_path = os.path.join(os.path.dirname(version_file_path), MAIN_PY_NAME)
@@ -110,16 +123,6 @@ if __name__ == '__main__':
         if not os.path.exists(main_file_path):
             raise FileNotFoundError(
                 'Unable to find a script to build (neither \"{MAIN_PY_NAME}\" nor \"{py_name}\")')
-
-    # check if this current commit is a release or not
-    # is a release if this commit was tagged
-    repo = git.Repo(search_parent_directories=True)
-    expected_tag_name = generate_version_tag(args.name, version)
-    is_release = is_commit_a_release(
-        repo, expected_tag_name, get_git_commit_hash(repo, length=40))
-    if not is_release:
-        # non-releases get the commit hash added to their version
-        version = add_commit_hash_to_version(version)
 
     # generate .version file to embed in executable
     # put it in a dist folder

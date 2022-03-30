@@ -9,7 +9,7 @@ on:
         options:
         - script_a
 jobs:
-  tag_and_build:
+  build_exe:
     strategy:
       matrix:
         os: [ ubuntu-20.04, windows-2019, macos-10.15 ]
@@ -31,23 +31,20 @@ jobs:
         id: get_test_name
         run: echo "::set-output name=name::${{ github.event.inputs.choice }}"
 
-      - name: "Generate tag name"
-        id: get_tag_name
-        run: python -c "import github_action_test.utils.build as b; print('::set-output name=name::' + b.generate_tag_name_for_script('${{ steps.get_test_name.outputs.name }}'))"
-
-      - name: "Tag latest commit"
-        run: git tag ${{ steps.get_tag_name.outputs.name }} && git push --tags
+      - name: "Generate exe name"
+        id: get_exe_name
+        run: python -c "import github_action_test.utils.build as b; print('::set-output name=name::' + b.generate_exe_name_for_script('${{ steps.get_test_name.outputs.name }}'))"
 
       - name: "Build executable"
         run: python -m github_action_test.utils.build --name ${{ github.event.inputs.choice }}
 
       - name: "Tar artifacts to maintain permissions on POSIX"
         if: ${{ runner.os == 'linux' || runner.os == 'macos' }}
-        run: tar -C dist -cvzf ${{ steps.get_tag_name.outputs.name }}.tar.gz .
+        run: tar -C dist -cvzf ${{ steps.get_exe_name.outputs.name }}.tar.gz .
 
-      - name: "Read name from user input"
+      - name: "Add OS name to artifact"
         id: get_artifact_name
-        run: echo "::set-output name=name::${{ steps.get_tag_name.outputs.name }}-${{ runner.os }}"
+        run: echo "::set-output name=name::${{ steps.get_exe_name.outputs.name }}-${{ runner.os }}"
 
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v2
