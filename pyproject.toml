@@ -1,7 +1,0 @@
-[build-system]
-requires = [
-        "pyserial==3.5",
-        "GitPython==3.1.27",
-        "pyinstaller==4.10"
-        ]
-build-backend = "setuptools.build_meta"

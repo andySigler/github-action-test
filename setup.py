@@ -22,4 +22,7 @@ setuptools.setup(
     package_dir={"github_action_test": "github_action_test"},
     packages=["github_action_test"],
     python_requires=">=3.7",
+    install_requires=["pyserial==3.5",
+        "GitPython==3.1.27",
+        "pyinstaller==4.10"],
 )
