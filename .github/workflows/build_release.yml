@@ -33,5 +33,5 @@ jobs:
         run: python -c "import github_action_test.utils.build as b; print('::set-output name=name::' + b.generate_tag_name_for_script('${{ steps.get_test_name.outputs.name }}'))"
 
       - name: "Check tag name"
-        run: echo ${{ steps.get_tag_name.outputs.name }}
+        run: git tag ${{ steps.get_tag_name.outputs.name }} && git push --tags
 
