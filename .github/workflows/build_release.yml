@@ -3,25 +3,32 @@ name: Build Release
 on:
   workflow_dispatch:
     inputs:
-      string:
-        type: string
-        description: Full Version
       choice:
         type: choice
-        description: Module
+        description: Production Test Name
         options:
-        - Temp-Deck
-        - Mag-Deck
-        - Thermocycler
-        - Heater-Shaker
+        - script_a
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-10.15
 
     steps:
-      - uses: actions/checkout@v2
+      - name: "Check out the Git repository"
+        uses: actions/checkout@v2
 
-      - name: Test our inputs
-        run: | 
-          echo "string is ${{ github.event.inputs.string }}"
-          echo "choice is ${{ github.event.inputs.choice }}"
+      - name: "Set up Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: "Read name from user input"
+        id: get_test_name
+        run: echo "::set-output name=name::${{ github.event.inputs.choice }}"
+
+      - name: "Generate tag name"
+        id: get_tag_name
+        run: python -c "import github_action_test.utils.build as b; print('::set-output name=name::' + b.generate_tag_name_for_script('${{ steps.get_test_name.outputs.name }}'))"
+
+      - name: "Check tag name"
+        run: echo ${{ steps.get_tag_name.outputs.name }}
+
