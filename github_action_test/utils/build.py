@@ -47,6 +47,7 @@ def is_commit_a_release(repo, expected_tag_name, commit_hash):
 
 def is_tag_already_made(repo, tag_name):
     for tag in repo.tags:
+        print(f'({tag_name} == {str(tag)}) is {(tag_name == str(tag))}')
         if tag_name == str(tag):
             return True
     return False
@@ -87,7 +88,9 @@ def generate_tag_name_for_script(name):
     tag_name = generate_version_tag(name, read_version_file(find_version_file_path(name)))
     repo = git.Repo(search_parent_directories=True)
     if is_tag_already_made(repo, tag_name):
+        print('ALREADY A TAG')
         raise ValueError(f'Tag with name \"{tag_name}\" already exists')
+    return tag_name
 
 
 
