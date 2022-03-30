@@ -68,10 +68,10 @@ def find_version_file_path(name):
     scripts_dir = os.path.join(os.path.dirname(__file__), TARGET_DIR_RELATIVE_TO_THIS_FILE)
     matching_dirs = search_for_subfolder_by_name(scripts_dir, name)
     if not len(matching_dirs):
-        raise ValueError(f'No script subfolders found named \"{args.name}\"')
+        raise ValueError(f'No script subfolders found named \"{name}\"')
     if len(matching_dirs) > 1:
         # TODO: maybe make a list to pick which one to build?
-        raise ValueError(f'Multiple script subfolders found named \"{args.name}\": {matching_dirs}')
+        raise ValueError(f'Multiple script subfolders found named \"{name}\": {matching_dirs}')
     return os.path.join(matching_dirs[0], VERSION_FILE_NAME)
 
 
